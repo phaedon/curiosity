@@ -3,7 +3,7 @@ cc_binary(
     srcs = ["bench.cpp"],
     deps = [
         "@com_google_absl//absl/container:flat_hash_map",
-        "@com_google_absl//absl/random:random",
+        "@com_google_absl//absl/random",
         "@google_benchmark//:benchmark",
         "@libuuid//:uuid",
     ],
