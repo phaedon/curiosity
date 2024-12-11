@@ -1,0 +1,10 @@
+cc_binary(
+    name = "bench",
+    srcs = ["bench.cpp"],
+    deps = [
+        "@com_google_absl//absl/container:flat_hash_map",
+        "@com_google_absl//absl/random:random",
+        "@google_benchmark//:benchmark",
+        "@libuuid//:uuid",
+    ],
+)
