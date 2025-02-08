@@ -1,3 +1,6 @@
+// Run in opt mode for accurate timings, with:
+// bazel run --compilation_mode=opt :bench
+
 #include <benchmark/benchmark.h>
 #include <uuid/uuid.h>
 
