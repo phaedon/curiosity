@@ -48,6 +48,7 @@ cc_library(
     deps = [
         "@imgui-1.91.8",
     ],
+    linkopts = ["-lGL"], # Required for linux
     visibility = ["//visibility:public"], 
 )
 """,
