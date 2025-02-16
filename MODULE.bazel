@@ -1,10 +1,14 @@
 bazel_dep(name = "abseil-cpp", version = "20250127.0", repo_name = "com_google_absl")
+
+# Required for GLFW support on MacOS.
+bazel_dep(name = "apple_support", version = "1.18.0")
+
+bazel_dep(name = "boost.math", version = "1.83.0.bcr.1")
+bazel_dep(name = "ceres-solver", version = "2.2.0")
 bazel_dep(name = "eigen", version = "3.4.0.bcr.2")
 bazel_dep(name = "glfw", version = "3.3.9")
 bazel_dep(name = "google_benchmark", version = "1.9.1")
 bazel_dep(name = "googletest", version = "1.16.0")
-bazel_dep(name = "libuuid", version = "2.39.3.bcr.1")
-
-# Required for GLFW support on MacOS.
-bazel_dep(name = "apple_support", version = "1.18.0")
 bazel_dep(name = "imgui", version = "1.91.8")
+bazel_dep(name = "implot", version = "0.16")
+bazel_dep(name = "libuuid", version = "2.39.3.bcr.1")

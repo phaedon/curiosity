@@ -8,9 +8,9 @@ cc_library(
     srcs = ["implot.cpp", "implot_items.cpp", "implot_demo.cpp"],
     hdrs = ["implot.h", "implot_internal.h"],
     deps = [
-        "@imgui//:imgui-glfw-opengl3",
+        "@imgui",
     ],
-    linkopts = ["-lGL"], # Required for linux
+    #linkopts = ["-lGL"], # Required for linux
     visibility = ["//visibility:public"], 
 )
 """,
