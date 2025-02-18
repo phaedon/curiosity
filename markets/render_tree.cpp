@@ -14,6 +14,7 @@
 #include "markets/rates/bdt.h"
 #include "markets/rates/swaps.h"
 #include "markets/yield_curve.h"
+#include "propagators.h"
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 
@@ -112,18 +113,27 @@ int main(int, char**) {
   }
   const double expected_drift = 0.0;
 
-  markets::BinomialTree asset(
-      std::chrono::months(15), std::chrono::days(10), markets::YearStyle::k360);
-  asset.resizeWithTimeDependentVol(&getTimeDependentVol);
+  // markets::BinomialTree asset(
+  //    std::chrono::months(15), std::chrono::days(10),
+  //    markets::YearStyle::k360);
+  // asset.resizeWithTimeDependentVol(&getTimeDependentVol);
 
   markets::BinomialTree deriv(
       std::chrono::months(15), std::chrono::days(10), markets::YearStyle::k360);
   deriv.resizeWithTimeDependentVol(&getTimeDependentVol);
 
-  float spot_price = 100;
-  markets::CRRPropagator crr_prop(
-      expected_drift, spot_price, &getTimeDependentVol);
+  // float spot_price = 100;
+  // markets::CRRPropagator crr_prop(
+  //     expected_drift, spot_price, &getTimeDependentVol);
+
+  float spot_price = 0.08;
+
   markets::JarrowRuddPropagator jr_prop(expected_drift, vol, spot_price);
+
+  markets::BinomialTree asset(
+      std::chrono::months(36), std::chrono::days(10), markets::YearStyle::k360);
+  asset.resizeWithTimeDependentVol(&getTimeDependentVol);
+  markets::CIRPropagator crr_prop(spot_rate, 5.0, 0.05, &getTimeDependentVol);
 
   float deriv_expiry = 1.0;
   float strike = 100;
@@ -158,7 +168,7 @@ int main(int, char**) {
     }
 
     ImGui::SliderFloat("Volatility", &vol, 0.0f, 0.40f, "%.3f");
-    crr_prop.updateVol(vol);
+    // crr_prop.updateVol(vol);
     jr_prop.updateVol(vol);
 
     ImGui::DragFloat("Spot", &spot_price, 0.1f, 0.0f, 200.0f, "%.2f");
