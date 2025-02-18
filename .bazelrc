@@ -1,2 +1,4 @@
+query --registry=https://raw.githubusercontent.com/phaedon/bazel-central-registry/implot
+build --registry=https://raw.githubusercontent.com/phaedon/bazel-central-registry/implot
 build --cxxopt=-std=c++20
 test --test_output=errors
