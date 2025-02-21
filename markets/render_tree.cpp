@@ -13,6 +13,7 @@
 #include "markets/rates/arrow_debreu.h"
 #include "markets/rates/bdt.h"
 #include "markets/rates/swaps.h"
+#include "markets/volatility.h"
 #include "markets/yield_curve.h"
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
@@ -27,18 +28,19 @@ double forwardVol(
                    (T - t));
 }
 
-double getTimeDependentVol(double t) {
-  // just a hard-coded example from Derman 13-6 to get started.
-  double vol_0_1 = 0.1587;
-  double vol_0_2 = 0.1587;
-  double vol_0_3 = 0.1587;
-  double t1 = 0.6;
-  double t2 = 2.0;
-  double t3 = 3.0;
-  if (t <= t1) return vol_0_1;
-  if (t <= t2) return forwardVol(0, t1, t2, vol_0_1, vol_0_2);
-  return forwardVol(0, t2, t3, vol_0_2, vol_0_3);
-}
+struct DermanExampleVol {
+  double operator()(double t) const {
+    double vol_0_1 = 0.2;
+    double vol_0_2 = 0.255;
+    double vol_0_3 = 0.311;
+    double t1 = 1.0;
+    double t2 = 2.0;
+    double t3 = 3.0;
+    if (t <= t1) return vol_0_1;
+    if (t <= t2) return forwardVol(0, t1, t2, vol_0_1, vol_0_2);
+    return forwardVol(0, t2, t3, vol_0_2, vol_0_3);
+  }
+};
 
 int main(int, char**) {
   glfwSetErrorCallback(glfw_error_callback);
@@ -84,14 +86,12 @@ int main(int, char**) {
   const auto timestep = std::chrono::weeks(4);
   const auto tree_duration = std::chrono::years(5);
   markets::BinomialTree tree(tree_duration, timestep);
-  tree.setInitValue(spot_rate);
 
   markets::BdtPropagator bdt(tree.numTimesteps(), vol, spot_rate);
   tree.forwardPropagate(bdt);
 
   markets::ArrowDebreauPropagator arrowdeb(tree, tree.numTimesteps());
   markets::BinomialTree adtree(tree_duration, timestep);
-  adtree.setInitValue(1.0);
   adtree.forwardPropagate(arrowdeb);
 
   std::vector<double> yield_curve(tree.numTimesteps());
@@ -112,17 +112,17 @@ int main(int, char**) {
   }
   const double expected_drift = 0.0;
 
+  DermanExampleVol tsmvolfn;
+  markets::Volatility tsmvol(tsmvolfn);
+
   markets::BinomialTree asset(
       std::chrono::months(15), std::chrono::days(10), markets::YearStyle::k360);
-  asset.resizeWithTimeDependentVol(&getTimeDependentVol);
 
   markets::BinomialTree deriv(
       std::chrono::months(15), std::chrono::days(10), markets::YearStyle::k360);
-  deriv.resizeWithTimeDependentVol(&getTimeDependentVol);
 
   float spot_price = 100;
-  markets::CRRPropagator crr_prop(
-      expected_drift, spot_price, &getTimeDependentVol);
+  markets::CRRPropagator crr_prop(expected_drift, spot_price, tsmvol);
   markets::JarrowRuddPropagator jr_prop(expected_drift, vol, spot_price);
 
   float deriv_expiry = 1.0;

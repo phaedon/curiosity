@@ -110,19 +110,5 @@ double getTimeDependentVol(double t) {
   return forwardVol(0, 2, 3, 0.255, 0.311);
 }
 
-TEST(BinomialTree, Derman_VolSmile_13_6) {
-  BinomialTree asset(3.0, 1 / 10., YearStyle::kBusinessDays252);
-  asset.resizeWithTimeDependentVol(&getTimeDependentVol);
-
-  CRRPropagator crr_prop(0.00, 100, &getTimeDependentVol);
-  asset.forwardPropagate(crr_prop);
-  for (int t = 0; t < asset.numTimesteps(); ++t) {
-    std::cout << "t:" << t << "   dt:" << asset.timestepAt(t) << std::endl;
-  }
-
-  // just to trigger std::cout
-  // EXPECT_TRUE(false);
-}
-
 }  // namespace
 }  // namespace markets

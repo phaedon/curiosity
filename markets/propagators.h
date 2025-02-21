@@ -9,31 +9,20 @@ namespace markets {
 
 struct CRRPropagator {
   CRRPropagator(double expected_drift, double annualized_vol, double spot_price)
-      : expected_drift_(expected_drift),
-        annualized_vol_(annualized_vol),
-        spot_price_(spot_price) {}
+      : expected_drift_(expected_drift), spot_price_(spot_price) {}
 
-  CRRPropagator(double expected_drift,
-                double spot_price,
-                const TimeDepVolFn& vol_fn)
-      : expected_drift_(expected_drift),
-        spot_price_(spot_price),
-        vol_fn_(std::make_unique<const TimeDepVolFn>(vol_fn)) {}
+  CRRPropagator(double expected_drift, double spot_price)
+      : expected_drift_(expected_drift), spot_price_(spot_price) {}
 
-  double getVol(double t) const {
-    if (isVolConst()) {
-      return annualized_vol_;
-    }
-    return (*vol_fn_)(t);
-  }
-
-  bool isVolConst() const { return vol_fn_ == nullptr; }
-
-  double operator()(const BinomialTree& tree, int t, int i) const {
+  template <typename VolFnT>
+  double operator()(const BinomialTree& tree,
+                    const VolFnT& volfn,
+                    int t,
+                    int i) const {
     if (t == 0) return spot_price_;
     double curr_time = tree.totalTimeAtIndex(t);
     double dt = tree.timestepAt(t);
-    double u = getVol(curr_time) * std::sqrt(dt);
+    double u = volfn(curr_time) * std::sqrt(dt);
 
     if (i == 0) {
       double d = -u;
@@ -47,19 +36,18 @@ struct CRRPropagator {
     // The "modeled" probability is 0.5 + 0.5 * (expected_drift_ /
     // annualized_vol_) * std::sqrt(dt); However here for asset pricing we use
     // the risk-neutral:
+
+    double annualized_vol_ = 0.15;  // TODO FIXME
     double u = annualized_vol_ * std::sqrt(dt);
     double d = -u;
     double r_temp = 0.0;  // TODO add rate
     return (std::exp(r_temp * dt) - std::exp(d)) / (std::exp(u) - std::exp(d));
   }
 
-  void updateVol(double vol) { annualized_vol_ = vol; }
   void updateSpot(double spot) { spot_price_ = spot; }
 
   double expected_drift_;
-  double annualized_vol_;
   double spot_price_;
-  std::unique_ptr<const TimeDepVolFn> vol_fn_;
 };
 
 struct JarrowRuddPropagator {

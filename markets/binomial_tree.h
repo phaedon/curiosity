@@ -12,7 +12,66 @@
 
 namespace markets {
 
-using TimeDepVolFn = std::function<double(double)>;
+struct BasicTree {
+  BasicTree(double tree_duration_years, double initial_timestep_years)
+      : tree_duration_years_(tree_duration_years),
+        initial_timestep_years_(initial_timestep_years) {
+    // Always initialize the tree, even if it will evolve later.
+    int num_timesteps =
+        std::ceil(tree_duration_years_ / initial_timestep_years_) + 1;
+    tree_.resize(num_timesteps, num_timesteps);
+    tree_.setZero();
+
+    total_durations_.resize(num_timesteps);
+    for (int i = 0; i < num_timesteps; ++i) {
+      total_durations_[i] = i * initial_timestep_years;
+    }
+  }
+
+  double timestepAt(int t) const {
+    // Basic error-handling: Assume the final timestep is the final word.
+    if (t >= total_durations_.size() - 1) {
+      return timestepAt(total_durations_.size() - 2);
+    }
+    return total_durations_[t + 1] - total_durations_[t];
+  }
+
+  // Stores the raw node values.
+  // These can be: an underlying asset (stock or commodity), interest rates, FX
+  // rates, or any such stochastic variable whose evolution we model forward in
+  // time. It can also be something that is used to price derivative securities.
+  // But here it doesn't matter. It's just a data structure that is better than
+  // Excel. We will give it some good accessors/mutators and other behaviours.
+  Eigen::MatrixXd tree_;
+
+  // Whether we have a fixed or variable timestep, it's essential to know these
+  // precisely. In the case of a fixed timestep, these will be evenly spaced.
+  // But that's still useful, because we just need to do a lookup to get dt. We
+  // won't need to add special-case logic.
+  Eigen::VectorXd total_durations_;
+
+  // We store the initial timestep as a consistent starting point.
+  // Even if the tree is resized (i.e. because of term structure of vol changing
+  // shape) it gives a reference point for how to initialise the tree.
+  double initial_timestep_years_;
+
+  double tree_duration_years_;
+};
+
+// Just some utility functions for convenience...
+inline BasicTree create(std::chrono::years total_duration,
+                        std::chrono::weeks timestep,
+                        YearStyle style = YearStyle::k365) {
+  return BasicTree(total_duration.count(),
+                   timestep.count() * 7 / numDaysInYear(style));
+}
+
+inline BasicTree create(std::chrono::months total_duration,
+                        std::chrono::days timestep,
+                        YearStyle style = YearStyle::k365) {
+  return BasicTree(total_duration.count() / 12.0,
+                   timestep.count() / numDaysInYear(style));
+}
 
 class BinomialTree {
  public:
@@ -20,8 +79,7 @@ class BinomialTree {
                std::chrono::weeks timestep,
                YearStyle style = YearStyle::k365)
       : tree_duration_years_(total_duration.count()),
-        timestep_years_(timestep.count() * 7 / numDaysInYear(style)),
-        year_style_(style) {
+        timestep_years_(timestep.count() * 7 / numDaysInYear(style)) {
     int num_timesteps = std::ceil(tree_duration_years_ / timestep_years_) + 1;
     tree_.resize(num_timesteps, num_timesteps);
     tree_.setZero();
@@ -31,8 +89,7 @@ class BinomialTree {
                std::chrono::days timestep,
                YearStyle style = YearStyle::k365)
       : tree_duration_years_(total_duration.count() / 12.0),
-        timestep_years_(timestep.count() / numDaysInYear(style)),
-        year_style_(style) {
+        timestep_years_(timestep.count() / numDaysInYear(style)) {
     int num_timesteps = std::ceil(tree_duration_years_ / timestep_years_) + 1;
     tree_.resize(num_timesteps, num_timesteps);
     tree_.setZero();
@@ -42,39 +99,13 @@ class BinomialTree {
                double timestep_years,
                YearStyle style = YearStyle::k365)
       : tree_duration_years_(total_duration_years),
-        timestep_years_(timestep_years),
-        year_style_(style) {
+        timestep_years_(timestep_years) {
     int num_timesteps = std::ceil(tree_duration_years_ / timestep_years_) + 1;
     tree_.resize(num_timesteps, num_timesteps);
     tree_.setZero();
   }
 
-  // Prepares a tree for time-dependent deterministic volaility
-  // (term structure, but no skew).
-  // Preserves timestep_years_ as the size of the initial timestep.
-  void resizeWithTimeDependentVol(const TimeDepVolFn& vol_fn) {
-    double total_time = 0;
-    double dt_curr = timestep_years_;
-    timesteps_.push_back(dt_curr);
-    total_times_.push_back(total_time);
-
-    while (total_time <= tree_duration_years_) {
-      double sig_curr = vol_fn(total_time);
-      total_time += dt_curr;
-      double sig_next = vol_fn(total_time);
-      double dt_next = sig_curr * sig_curr * dt_curr / (sig_next * sig_next);
-      timesteps_.push_back(dt_next);
-      total_times_.push_back(total_time);
-      dt_curr = dt_next;
-    }
-
-    tree_.resize(timesteps_.size(), timesteps_.size());
-    tree_.setZero();
-  }
-
   int numTimesteps() const { return tree_.rows(); }
-
-  void setInitValue(double val) { setValue(0, 0, val); }
 
   template <typename PropagatorT>
   void forwardPropagate(const PropagatorT& fwd_prop) {
@@ -152,8 +183,6 @@ class BinomialTree {
     return tree_(time, node_index);
   }
 
-  YearStyle getYearStyle() const { return year_style_; }
-
   bool isTreeEmptyAt(int t) const {
     // current assumption: if an entire row is 0, nothing after it can be
     // populated.
@@ -178,10 +207,9 @@ class BinomialTree {
   double treeDurationYears() const { return tree_duration_years_; }
 
  private:
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> tree_;
+  Eigen::MatrixXd tree_;
   double tree_duration_years_;
   double timestep_years_;
-  YearStyle year_style_;
 
   // Only used in case of time-dep vol. There is a better way to structure this.
   std::vector<double> timesteps_;
