@@ -41,4 +41,8 @@ TEST(MicrogradTest, ValueObjectAPI) {
   auto d = Value(2) * Value(-3) + Value(10);
   EXPECT_EQ(Value(4), d);
   EXPECT_THAT(d.children, testing::UnorderedElementsAre(Value(-6), Value(10)));
+
+  // Next steps:
+  // https://www.boost.org/doc/libs/1_87_0/libs/graph/doc/write-graphviz.html at
+  // boost/graph/graphviz.hpp
 }

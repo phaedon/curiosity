@@ -1,2 +1,4 @@
 bazel-*
 *.bazel.lock
+.vscode/
+compile_commands.json
