@@ -1,0 +1,13 @@
+cc_library(
+    name = "micrograd",
+    hdrs = ["micrograd.h"],
+)
+
+cc_test(
+    name = "micrograd_test",
+    srcs = ["micrograd_test.cpp"],
+    deps = [
+        ":micrograd",
+        "@googletest//:gtest_main",
+    ],
+)
