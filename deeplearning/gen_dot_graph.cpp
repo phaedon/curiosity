@@ -31,5 +31,14 @@ int main() {
 
   write_dot_file(graph2, "neuron.dot");
 
+  auto aa = Value(-2, "aa");
+  auto bb = Value(3, "bb");
+  auto dd = aa * bb;
+  auto ee = aa + bb;
+  auto ff = dd * ee;
+  ff.runBackprop();
+  Graph graph3 = build_value_graph_with_ops(ff);
+  write_dot_file(graph3, "multiedge.dot");
+
   return 0;
 }
