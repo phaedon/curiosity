@@ -29,30 +29,32 @@ using Graph = boost::adjacency_list<boost::vecS,       // OutEdgeList
                                     boost::directedS,  // Directed
                                     NodeProperties     // VertexProperties
                                     >;
+
 using Vertex = boost::graph_traits<Graph>::vertex_descriptor;
+
 template <typename T>
 void build_value_graph_recursive(
     const ExprTree<T>& tree,     // Pass ExprTree as a parameter
     const std::string& v_label,  // Use string labels
-    std::unordered_map<const std::string*, Vertex>&
+    std::unordered_map<std::string, Vertex>&
         label_to_vertex,  // Map string labels to vertices
     Graph& g,
-    std::unordered_set<const std::string*>& visited) {
-  if (visited.contains(&v_label)) {
+    std::unordered_set<std::string>& visited) {
+  if (visited.contains(v_label)) {
     return;
   }
-  visited.insert(&v_label);
+  visited.insert(v_label);
 
-  if (!label_to_vertex.contains(&v_label)) {
+  if (!label_to_vertex.contains(v_label)) {
     Vertex current_v = boost::add_vertex(g);
     const Value<T>& v = tree(v_label);  // Access Value object from ExprTree
     g[current_v].label = (v.label.empty() ? std::to_string(v.data) : v.label) +
                          "\nvalue: " + std::to_string(v.data) +
                          "\ngrad: " + std::to_string(v.grad);
     g[current_v].op = "";
-    label_to_vertex[&v_label] = current_v;
+    label_to_vertex[v_label] = current_v;
   }
-  Vertex current_v = label_to_vertex[&v_label];
+  Vertex current_v = label_to_vertex[v_label];
 
   const Value<T>& v = tree(v_label);  // Access Value object from ExprTree
 
@@ -67,7 +69,7 @@ void build_value_graph_recursive(
 
   // Edges from operands to the operator
   for (const std::string& child_label : v.children) {
-    if (!label_to_vertex.contains(&child_label)) {
+    if (!label_to_vertex.contains(child_label)) {
       Vertex child_v = boost::add_vertex(g);
       const Value<T>& child =
           tree(child_label);  // Access Value object from ExprTree
@@ -76,16 +78,13 @@ void build_value_graph_recursive(
           "\nvalue: " + std::to_string(child.data) +
           "\ngrad: " + std::to_string(child.grad);
       g[child_v].op = "";
-      label_to_vertex[&child_label] = child_v;
+      label_to_vertex[child_label] = child_v;
       build_value_graph_recursive(
           tree, child_label, label_to_vertex, g, visited);
     }
     boost::add_edge(
-        label_to_vertex[&child_label], op_v, g);  // Operand points to operator
+        label_to_vertex[child_label], op_v, g);  // Operand points to operator
   }
-
-  // Edge from the operator to the result
-  // boost::add_edge(op_v, current_v, g);
 
   // Recursively process children AFTER creating the operator and operand edges
   for (const std::string& child_label : v.children) {
@@ -97,8 +96,8 @@ template <typename T>
 Graph build_value_graph_with_ops(const ExprTree<T>& tree,
                                  const std::string& root_label) {
   Graph g;
-  std::unordered_map<const std::string*, Vertex> label_to_vertex;
-  std::unordered_set<const std::string*> visited;
+  std::unordered_map<std::string, Vertex> label_to_vertex;
+  std::unordered_set<std::string> visited;
   build_value_graph_recursive(tree, root_label, label_to_vertex, g, visited);
   return g;
 }
