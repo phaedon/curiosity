@@ -3,7 +3,6 @@ cc_library(
     hdrs = ["micrograd.h"],
     deps = [
         "@abseil-cpp//absl/strings",
-        "@boost.graph",
     ],
 )
 
@@ -19,5 +18,8 @@ cc_test(
 cc_binary(
     name = "gen_dot_graph",
     srcs = ["gen_dot_graph.cpp"],
-    deps = [":micrograd"],
+    deps = [
+        ":micrograd",
+        "@boost.graph",
+    ],
 )

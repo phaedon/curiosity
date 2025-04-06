@@ -4,6 +4,9 @@
 
 #include "gmock/gmock.h"
 
+// Here's a parabola.
+inline double f(double x) { return 3 * std::pow(x, 2) - 4 * x + 5; }
+
 TEST(MicrogradTest, Parabola) {
   EXPECT_NEAR(5.0, f(0), 0.0001);
 
@@ -17,6 +20,9 @@ TEST(MicrogradTest, Parabola) {
   x = 2. / 3;
   EXPECT_NEAR(0, (f(x + h) - f(x)) / h, 1e-4);
 }
+
+// And here's an arbitrary example function with multiple variables.
+inline double g(double a, double b, double c) { return a * b + c; }
 
 TEST(MicrogradTest, MultivarFn) {
   double a = 2.;
@@ -34,15 +40,32 @@ TEST(MicrogradTest, MultivarFn) {
   EXPECT_GT((g(a, b + h, c) - d1) / h, 0);
 }
 
-TEST(MicrogradTest, ValueObjectAPI) {
-  EXPECT_EQ(Value(5), Value(2) + Value(3));
-  EXPECT_EQ(Value(6), Value(2) * Value(3));
+TEST(MicrogradTest, BackpropWithSharedNodes) {
+  // This test reproduces the graph at
+  // https://youtu.be/VMj-3S1tku0?t=5194
+  ExprTree<double> tree;
 
-  auto d = Value(2) * Value(-3) + Value(10);
-  EXPECT_EQ(Value(4), d);
-  EXPECT_THAT(d.children, testing::UnorderedElementsAre(Value(-6), Value(10)));
+  tree.reg(Value(-2.), "a");
+  tree.reg(Value(3.), "b");
+  tree.reg(tree("a") * tree("b"), "d");
+  tree.reg(tree("a") + tree("b"), "e");
+  tree.reg(tree("d") * tree("e"), "f");
+  tree.runBackprop("f");
 
-  // Next steps:
-  // https://www.boost.org/doc/libs/1_87_0/libs/graph/doc/write-graphviz.html at
-  // boost/graph/graphviz.hpp
+  EXPECT_EQ(5, tree.nodes.size());
+
+  EXPECT_DOUBLE_EQ(-6, tree("f").data);
+  EXPECT_DOUBLE_EQ(1.0, tree("f").grad);
+
+  EXPECT_DOUBLE_EQ(1.0, tree("e").data);
+  EXPECT_DOUBLE_EQ(-6.0, tree("e").grad);
+
+  EXPECT_DOUBLE_EQ(-6.0, tree("d").data);
+  EXPECT_DOUBLE_EQ(1.0, tree("d").grad);
+
+  EXPECT_DOUBLE_EQ(-2.0, tree("a").data);
+  EXPECT_DOUBLE_EQ(-3.0, tree("a").grad);
+
+  EXPECT_DOUBLE_EQ(3.0, tree("b").data);
+  EXPECT_DOUBLE_EQ(-8.0, tree("b").grad);
 }
