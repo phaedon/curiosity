@@ -1,6 +1,10 @@
 cc_library(
     name = "micrograd",
     hdrs = ["micrograd.h"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@boost.graph",
+    ],
 )
 
 cc_test(
@@ -10,4 +14,10 @@ cc_test(
         ":micrograd",
         "@googletest//:gtest_main",
     ],
+)
+
+cc_binary(
+    name = "gen_dot_graph",
+    srcs = ["gen_dot_graph.cpp"],
+    deps = [":micrograd"],
 )

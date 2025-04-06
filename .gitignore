@@ -2,3 +2,9 @@ bazel-*
 *.bazel.lock
 .vscode/
 compile_commands.json
+
+.DS_Store
+
+# Output of dot rendering.
+*.dot
+*.svg
