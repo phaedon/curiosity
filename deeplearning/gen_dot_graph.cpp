@@ -2,7 +2,6 @@
 #include "micrograd.h"
 
 int main() {
-  // This version generates a correct graph:
   auto a = Value<int>(2, "a");
   auto b = Value<int>(-3, "b");
   auto c = Value<int>(10, "c");
@@ -10,9 +9,8 @@ int main() {
   auto d = e + c;
   auto f = Value<int>(-2, "f");
   auto L = d * f;
-  runBackprop(L);
+  L.runBackprop();
 
-  // Graph graph = build_value_graph_with_ops(L);
   Graph graph = build_value_graph_with_ops(L);
 
   write_dot_file(graph, "value_graph.dot");
@@ -28,7 +26,7 @@ int main() {
   auto x2w2 = x2 * w2;
   auto n = x1w1 + x2w2 + bias;
   auto o = n.tanh();
-  runBackprop(o);
+  o.runBackprop();
   Graph graph2 = build_value_graph_with_ops(o);
 
   write_dot_file(graph2, "neuron.dot");

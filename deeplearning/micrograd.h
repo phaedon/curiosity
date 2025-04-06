@@ -69,11 +69,36 @@ class Value {
     return data == other->data && label == other->label;
   }
 
+  void runBackprop() {
+    grad = 1.0;
+    for (const Value<T>& child : children) {
+      runBackpropRecursive(const_cast<Value<T>&>(child), *this);
+    }
+  }
+
   T data;
   std::unordered_set<Value<T>, ValueHash<T>> children;
   std::string op;
   std::string label;
   double grad = 0.;
+
+ private:
+  void runBackpropRecursive(Value<T>& curr_node, const Value<T>& parent) {
+    curr_node.grad = parent.grad;
+    if (parent.op == "*") {
+      for (const auto& sib : parent.children) {
+        if (sib.label != curr_node.label) {
+          curr_node.grad *= sib.data;
+        }
+      }
+    } else if (parent.op == "+") {
+    } else if (parent.op == "tanh") {
+      curr_node.grad *= 1 - std::pow(parent.data, 2);
+    }
+    for (const Value<T>& child : curr_node.children) {
+      this->runBackpropRecursive(const_cast<Value<T>&>(child), curr_node);
+    }
+  }
 };
 
 // Define the graph type with a vertex property for the label
@@ -167,32 +192,6 @@ inline void write_dot_file(const Graph& g, const std::string& filename) {
     std::cout << "Graph written to " << filename << std::endl;
   } else {
     std::cerr << "Error opening file: " << filename << std::endl;
-  }
-}
-
-template <typename T>
-inline void runBackpropRecursive(Value<T>& curr_node, const Value<T>& parent) {
-  curr_node.grad = parent.grad;
-  if (parent.op == "*") {
-    for (const auto& sib : parent.children) {
-      if (sib.label != curr_node.label) {
-        curr_node.grad *= sib.data;
-      }
-    }
-  } else if (parent.op == "+") {
-  } else if (parent.op == "tanh") {
-    curr_node.grad *= 1 - std::pow(parent.data, 2);
-  }
-  for (const Value<T>& child : curr_node.children) {
-    runBackpropRecursive<T>(const_cast<Value<T>&>(child), curr_node);
-  }
-}
-
-template <typename T>
-inline void runBackprop(Value<T>& root) {
-  root.grad = 1.0;
-  for (const Value<T>& child : root.children) {
-    runBackpropRecursive<T>(const_cast<Value<T>&>(child), root);
   }
 }
 
