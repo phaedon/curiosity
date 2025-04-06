@@ -154,10 +154,15 @@ Graph build_value_graph_with_ops(const Value<T>& root) {
 inline void write_dot_file(const Graph& g, const std::string& filename) {
   std::ofstream dot_file(filename);
   if (dot_file.is_open()) {
-    boost::write_graphviz(
-        dot_file,
-        g,
-        boost::make_label_writer(boost::get(&NodeProperties::label, g)));
+    boost::write_graphviz(dot_file, g, [&](std::ostream& out, const Vertex& v) {
+      out << "[" << "label=\"" << g[v].label << "\"";
+      if (!g[v].op.empty()) {
+        out << " shape=ellipse";
+      } else {
+        out << " shape=box";
+      }
+      out << "]";
+    });
     dot_file.close();
     std::cout << "Graph written to " << filename << std::endl;
   } else {
