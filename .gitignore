@@ -8,3 +8,5 @@ compile_commands.json
 # Output of dot rendering.
 *.dot
 *.svg
+
+**/__pycache__/
