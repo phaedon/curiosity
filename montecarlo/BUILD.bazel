@@ -1,0 +1,8 @@
+cc_binary(
+    name = "traffic",
+    srcs = ["traffic.cpp"],
+    deps = [
+        "@abseil-cpp//absl/random",
+        "@polyscope",
+    ],
+)
