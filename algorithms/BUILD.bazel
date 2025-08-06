@@ -1,0 +1,13 @@
+cc_library(
+    name = "interval_tree",
+    hdrs = ["interval_tree.h"],
+)
+
+cc_test(
+    name = "interval_tree_test",
+    srcs = ["interval_tree_test.cpp"],
+    deps = [
+        ":interval_tree",
+        "@googletest//:gtest_main",
+    ],
+)
