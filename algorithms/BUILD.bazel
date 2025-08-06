@@ -7,7 +7,49 @@ cc_test(
     name = "interval_tree_test",
     srcs = ["interval_tree_test.cpp"],
     deps = [
+        ":interval_region",
         ":interval_tree",
         "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "interval_region",
+    hdrs = ["interval_region.h"],
+    deps = [
+        ":interval_tree",
+        "@abseil-cpp//absl/random",
+    ],
+)
+
+cc_binary(
+    name = "interval_vis",
+    srcs = ["interval_vis.cpp"],
+    deps = [
+        "@glfw",
+        "@imgui",
+        "@imgui//backends:platform-glfw",
+        "@imgui//backends:renderer-opengl3",
+    ],
+)
+
+cc_binary(
+    name = "interval_tree_bench",
+    srcs = ["interval_tree_bench.cpp"],
+    deps = [
+        ":interval_region",
+        ":interval_tree",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+    ],
+)
+
+cc_binary(
+    name = "interval_tree_poly",
+    srcs = ["interval_tree_poly.cpp"],
+    deps = [
+        ":interval_region",
+        ":interval_tree",
+        "@polyscope",
     ],
 )

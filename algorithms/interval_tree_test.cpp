@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "gmock/gmock.h"
+#include "interval_region.h"
 
 using ::testing::IsEmpty;
 using ::testing::UnorderedElementsAre;
@@ -29,4 +30,9 @@ TEST(IntervalTreeTest, Textbook) {
 
   EXPECT_THAT(example.queryIntervalTree(0.5), IsEmpty());
   EXPECT_THAT(example.queryIntervalTree(15.5), IsEmpty());
+}
+
+TEST(IntervalTreeTest, LargeSample) {
+  const auto tree = initRandomIntervalTree(1000000);
+  EXPECT_LT(tree.depth(), 20);
 }

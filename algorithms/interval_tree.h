@@ -1,3 +1,6 @@
+#ifndef ALGORITHMS_INTERVAL_TREE_H_
+#define ALGORITHMS_INTERVAL_TREE_H_
+
 #include <memory>
 #include <set>
 #include <unordered_set>
@@ -26,6 +29,7 @@ struct Interval {
 
   bool contains(float query) const { return query >= x_min && query <= x_max; }
   float x_min, x_max;
+  float y;
 };
 
 inline float getMedianEndpoint(const std::vector<Interval>& intervals) {
@@ -135,3 +139,5 @@ class IntervalTree {
   std::unique_ptr<IntervalTree> left;
   std::unique_ptr<IntervalTree> right;
 };
+
+#endif  // ALGORITHMS_INTERVAL_TREE_H_
