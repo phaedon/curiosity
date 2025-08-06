@@ -28,21 +28,27 @@ struct Interval {
   float x_min, x_max;
 };
 
+inline float getMedianEndpoint(const std::vector<Interval>& intervals) {
+  // Populate the unique set of endpoints:
+  std::unordered_set<float> interval_endpoints;
+
+  for (const auto& interval : intervals) {
+    interval_endpoints.insert(interval.x_min);
+    interval_endpoints.insert(interval.x_max);
+  }
+
+  // Use the unique set to compute the median:
+  std::vector<float> ordered_endpoints(interval_endpoints.begin(),
+                                       interval_endpoints.end());
+  auto m = ordered_endpoints.begin() + ordered_endpoints.size() / 2;
+  std::nth_element(ordered_endpoints.begin(), m, ordered_endpoints.end());
+  return ordered_endpoints[ordered_endpoints.size() / 2];
+}
+
 class IntervalTree {
  public:
   IntervalTree(std::vector<Interval> intervals) {
-    // Populate the unique set of endpoints:
-    for (const auto& interval : intervals) {
-      interval_endpoints.insert(interval.x_min);
-      interval_endpoints.insert(interval.x_max);
-    }
-
-    // Use the unique set to compute the median:
-    std::vector<float> ordered_endpoints(interval_endpoints.begin(),
-                                         interval_endpoints.end());
-    auto m = ordered_endpoints.begin() + ordered_endpoints.size() / 2;
-    std::nth_element(ordered_endpoints.begin(), m, ordered_endpoints.end());
-    x_mid = ordered_endpoints[ordered_endpoints.size() / 2];
+    x_mid = getMedianEndpoint(intervals);
 
     // Partition the input intervals into three:
     std::vector<Interval> left_intervals;
@@ -87,32 +93,31 @@ class IntervalTree {
     return 1 + std::max(left_depth, right_depth);
   }
 
+  static void populateMatchesFromSortedIntervals(
+      const std::vector<Interval>& intervals,
+      std::set<Interval>& matches,
+      float query) {
+    for (const auto& interval : intervals) {
+      if (interval.contains(query)) {
+        matches.insert(interval);
+      } else {
+        // Stop as soon as an interval does not contain query.
+        return;
+      }
+    }
+  }
+
   std::set<Interval> queryIntervalTree(float query) const {
     std::set<Interval> matches;
 
     if (query < x_mid) {
-      for (const auto& interval : mid_left_sort) {
-        if (interval.contains(query)) {
-          matches.insert(interval);
-        } else {
-          // Stop as soon as an interval does not contain query.
-          break;
-        }
-      }
+      populateMatchesFromSortedIntervals(mid_left_sort, matches, query);
       if (left != nullptr) {
         auto left_matches = left->queryIntervalTree(query);
         matches.insert(left_matches.begin(), left_matches.end());
       }
     } else {
-      for (const auto& interval : mid_right_sort) {
-        if (interval.contains(query)) {
-          matches.insert(interval);
-        } else {
-          // Stop as soon as an interval does not contain query.
-          break;
-        }
-      }
-
+      populateMatchesFromSortedIntervals(mid_right_sort, matches, query);
       if (right != nullptr) {
         auto right_matches = right->queryIntervalTree(query);
         matches.insert(right_matches.begin(), right_matches.end());
@@ -126,7 +131,6 @@ class IntervalTree {
 
   std::vector<Interval> mid_left_sort;
   std::vector<Interval> mid_right_sort;
-  std::unordered_set<float> interval_endpoints;
 
   std::unique_ptr<IntervalTree> left;
   std::unique_ptr<IntervalTree> right;
