@@ -53,3 +53,17 @@ cc_binary(
         "@polyscope",
     ],
 )
+
+cc_library(
+    name = "bst",
+    hdrs = ["bst.h"],
+)
+
+cc_test(
+    name = "bst_test",
+    srcs = ["bst_test.cpp"],
+    deps = [
+        ":bst",
+        "@googletest//:gtest_main",
+    ],
+)
