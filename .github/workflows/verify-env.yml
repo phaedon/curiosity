@@ -1,0 +1,30 @@
+name: Verify Build Environment
+
+on:
+  workflow_dispatch: # Allows you to trigger this manually
+
+jobs:
+  test-environment:
+    runs-on: ubuntu-latest
+    # This tells GitHub to run the steps INSIDE your custom image
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/quant-build-env:latest
+
+    steps:
+      - name: Verify Clang Version
+        run: |
+          clang-18 --version
+          clang++-18 --version
+
+      - name: Verify CMake Version
+        run: cmake --version
+
+      - name: Verify Protobuf
+        run: |
+          protoc --version
+          ls -l /usr/local/lib/libprotobuf.a
+
+      - name: Verify Abseil Headers
+        run: |
+          ls /usr/local/include/absl/base/config.h
+          echo "Abseil headers found."
