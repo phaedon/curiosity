@@ -67,3 +67,20 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "range_tree",
+    hdrs = ["range_tree.h"],
+    deps = [
+        "@eigen",
+    ],
+)
+
+cc_test(
+    name = "range_tree_test",
+    srcs = ["range_tree_test.cpp"],
+    deps = [
+        ":range_tree",
+        "@googletest//:gtest_main",
+    ],
+)

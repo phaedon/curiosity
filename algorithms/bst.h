@@ -4,14 +4,15 @@
 #include <memory>
 #include <unordered_set>
 
+template <typename ElemT>
 struct BSTNode {
-  BSTNode(float v) : val(v) {}
+  BSTNode(ElemT v) : val(v) {}
 
-  float val;
+  ElemT val;
   std::unique_ptr<BSTNode> left;
   std::unique_ptr<BSTNode> right;
 
-  void insert(float v) {
+  void insert(const ElemT& v) {
     if (v < val) {
       if (left == nullptr) {
         left = std::make_unique<BSTNode>(v);
@@ -27,39 +28,44 @@ struct BSTNode {
     }
   }
 
-  bool isInRange(float a, float b) const { return a <= val && val <= b; }
+  bool isInRange(const ElemT& a, const ElemT& b) const {
+    return a <= val && val <= b;
+  }
 
   bool isLeaf() const { return left == nullptr && right == nullptr; }
 
-  const BSTNode* find(float v) const {
+  const BSTNode* find(const ElemT& v) const {
     if (val == v) return this;
     auto* child = v < val ? left.get() : right.get();
     return child == nullptr ? nullptr : child->find(v);
   }
 
-  void reportSubtree(std::unordered_set<float>& hits) const {
+  void reportSubtree(std::unordered_set<ElemT>& hits) const {
     hits.insert(val);
     if (left != nullptr) left->reportSubtree(hits);
     if (right != nullptr) right->reportSubtree(hits);
   }
 };
 
+template <typename ElemT>
 struct BST {
-  std::unique_ptr<BSTNode> root;
+  using NodeT = BSTNode<ElemT>;
 
-  void insert(float v) {
+  std::unique_ptr<NodeT> root;
+
+  void insert(const ElemT& v) {
     if (root == nullptr) {
-      root = std::make_unique<BSTNode>(v);
+      root = std::make_unique<NodeT>(v);
     } else {
       root->insert(v);
     }
   }
 
-  const BSTNode* find(float v) const {
+  const NodeT* find(const ElemT& v) const {
     return root == nullptr ? nullptr : root->find(v);
   }
 
-  const BSTNode* findSplitNode(float xmin, float xmax) const {
+  const NodeT* findSplitNode(float xmin, float xmax) const {
     if (root == nullptr) return nullptr;
 
     auto* split = root.get();

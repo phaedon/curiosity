@@ -8,12 +8,12 @@
 using ::testing::UnorderedElementsAre;
 
 TEST(BSTTest, RangeQuery_EmptyTree) {
-  BST tree;
+  BST<float> tree;
   EXPECT_TRUE(tree.rangeQuery1D(-10, 10).empty());
 }
 
 TEST(BSTTest, RangeQuery_SingleNode) {
-  BST tree;
+  BST<float> tree;
   tree.insert(5);
   EXPECT_TRUE(tree.rangeQuery1D(-10, 0).empty());
   EXPECT_TRUE(tree.rangeQuery1D(10, 20).empty());
@@ -24,7 +24,7 @@ TEST(BSTTest, RangeQuery_SingleNode) {
 }
 
 TEST(BSTTest, RangeQuery_BalancedTree) {
-  BST tree;
+  BST<float> tree;
   std::vector<float> values = {5, 3, 7, 1, 4, 6, 9};
   //  std::vector<float> values = {1, 3, 4, 5, 6, 7, 9};
   // std::vector<float> values = {9, 7, 6, 5, 4, 3, 1};
@@ -37,7 +37,7 @@ TEST(BSTTest, RangeQuery_BalancedTree) {
 }
 
 TEST(BSTTest, RangeQuery_UnbalancedTrees) {
-  BST asctree, desctree;
+  BST<float> asctree, desctree;
   std::vector<float> ascending = {1, 3, 4, 5, 6, 7, 9};
   std::vector<float> descending = {9, 7, 6, 5, 4, 3, 1};
   for (float v : ascending) asctree.insert(v);

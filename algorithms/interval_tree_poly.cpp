@@ -74,7 +74,7 @@ int main() {
   polyscope::init();
 
   // Create your interval tree
-  auto tree = initRandomIntervalTree(300000);
+  auto tree = initRandomIntervalTree(200000);
   g_tree = &tree;
 
   static float query_point = 0.5f;
