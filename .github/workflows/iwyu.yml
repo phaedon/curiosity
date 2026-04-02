@@ -1,0 +1,58 @@
+name: IWYU Cleanup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  iwyu-task:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run IWYU in Docker
+        # We mount the workspace into the container so changes persist to the host
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/github/workspace \
+            -w /github/workspace \
+            your-custom-ubuntu-image:latest \
+            /bin/bash -c "cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && python3 /usr/bin/fix_includes.py"
+
+      - name: Create PR on Host Runner
+        # This step runs on the 'ubuntu-latest' host, NOT inside your image
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ -n $(git status --porcelain) ]]; then
+            BRANCH="iwyu-cleanup-${{ github.run_id }}"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            
+            git checkout -b "$BRANCH"
+            git add .
+            git commit -m "chore: IWYU automated cleanup"
+            git push origin "$BRANCH"
+
+            ASSIGNEE="${{ github.actor }}"
+            if [[ "${{ github.event_name }}" == "schedule" ]]; then
+              ASSIGNEE="phaedon"
+            fi
+
+            gh pr create \
+              --title "IWYU Cleanup" \
+              --body "Automated IWYU suggestions." \
+              --draft \
+              --assignee "$ASSIGNEE"
+          fi
